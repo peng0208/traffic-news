@@ -173,10 +173,11 @@ func checkTime() {
 	}
 }
 
-// 去除多余空白，多余字符
+// 去除空白，换行等多余字符
 func replace(s string) string {
 	str := strings.Replace(s, " ","", -1)
 	str = strings.Replace(s, "r","", -1)
+	str = strings.Replace(s, "\r\n","", -1)
 	return str
 }
 

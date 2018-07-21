@@ -9,7 +9,7 @@ import (
 )
 
 const (
-	requestTimeout = 30 * time.Second
+	requestTimeout = 15 * time.Second
 	userAgent      = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/67.0.3396.99 Safari/537.36"
 	referer        = "https://www.icauto.com.cn/gonglu/"
 	acceptLanguage = "zh-CN,zh;q=0.9,en;q=0.8"
@@ -55,10 +55,6 @@ func requestDoc(urlstr string, method string, proxy string) *goquery.Document {
 		return nil
 	}
 	defer res.Body.Close()
-	ret := res.StatusCode
-	if ret != 200 {
-		return nil
-	}
 	cookiesCache = res.Cookies()
 	doc, err := goquery.NewDocumentFromReader(res.Body)
 	if err != nil {
