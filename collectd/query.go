@@ -4,7 +4,8 @@ import (
 	"net/http"
 	"github.com/PuerkitoBio/goquery"
 	"time"
-	"fmt"
+	"net/url"
+	"traffic-news/common"
 )
 
 const (
@@ -17,28 +18,27 @@ const (
 	cacheControl   = "max-age=0"
 )
 
-var CookiesCache []*http.Cookie
+var cookiesCache []*http.Cookie
 
-func QueryDoc(urlstr string, method string) *goquery.Document {
-	/*
+func requestDoc(urlstr string, method string, proxy string) *goquery.Document {
 	var clt *http.Client
 	var trans *http.Transport
-	proxyAddr := GetProxyAddr()
-	if proxyAddr == "" {
+
+	if proxy == "" {
 		clt = &http.Client{Timeout: requestTimeout}
 	} else {
-		proxy := func(_ *http.Request) (*url.URL, error) {
-			return url.Parse(proxyAddr)
+		prx := func(_ *http.Request) (*url.URL, error) {
+			return url.Parse(proxy)
 		}
-		trans = &http.Transport{Proxy: proxy}
+		trans = &http.Transport{Proxy: prx}
 		clt = &http.Client{Timeout: requestTimeout, Transport: trans}
 	}
-	*/
 
-	clt := &http.Client{Timeout: requestTimeout}
+	clt = &http.Client{Timeout: requestTimeout}
+
 	req, _ := http.NewRequest(method, urlstr, nil)
-	if CookiesCache != nil {
-		for _, c := range CookiesCache {
+	if cookiesCache != nil {
+		for _, c := range cookiesCache {
 			req.AddCookie(c)
 		}
 	}
@@ -48,9 +48,10 @@ func QueryDoc(urlstr string, method string) *goquery.Document {
 	req.Header.Add("Accept", accept)
 	req.Header.Add("Connection", connection)
 	req.Header.Add("Cache-Control", cacheControl)
+
 	res, err := clt.Do(req)
 	if err != nil {
-		fmt.Println(err)
+		common.Logger().Error(err)
 		return nil
 	}
 	defer res.Body.Close()
@@ -58,10 +59,27 @@ func QueryDoc(urlstr string, method string) *goquery.Document {
 	if ret != 200 {
 		return nil
 	}
-	CookiesCache = res.Cookies()
+	cookiesCache = res.Cookies()
 	doc, err := goquery.NewDocumentFromReader(res.Body)
 	if err != nil {
-		fmt.Println(err)
+		common.Logger().Error(err)
+		return nil
 	}
 	return doc
+}
+
+func QueryDoc(urlstr string, method string) *goquery.Document {
+	var doc *goquery.Document
+	for {
+		proxy := GetProxy()
+		common.Logger().Infof("当前代理IP为[%s]", proxy)
+		doc = requestDoc(urlstr, method, proxy)
+		if doc == nil {
+			common.Logger().Errorf("请求异常或代理IP无效[%s]，1秒后重试", proxy)
+			time.Sleep(1 * time.Second)
+			continue
+		}
+		return doc
+	}
+
 }

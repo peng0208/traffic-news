@@ -4,8 +4,8 @@ import (
 	"time"
 	"regexp"
 	"github.com/PuerkitoBio/goquery"
-	"fmt"
 	"traffic-news/common"
+	"strings"
 )
 
 const baseUrl = "https://www.icauto.com.cn/gonglu/"
@@ -49,7 +49,6 @@ type (
 
 func searchIndex() *goquery.Document {
 	doc := QueryDoc(baseUrl, "GET")
-	pause(doc)
 	return doc
 }
 
@@ -62,7 +61,7 @@ func searchNewsList(doc *goquery.Document) newsList {
 		li := listAll.Eq(i).Text()
 		r := re.FindStringSubmatch(li)
 		if len(r) > 0 && len(r[2]) > 0 {
-			data = append(data, &news{r[1], r[2]})
+			data = append(data, &news{r[1], replace(r[2])})
 		}
 	}
 	return data
@@ -102,38 +101,34 @@ func searchCodeList(doc *goquery.Document) codeList {
 func (pl provinceList) search() {
 	for _, p := range pl {
 		provNewsData := make(provinceNewsList, 0)
+		time.Sleep(requestInterval)
 
 		doc := QueryDoc(p.url, "GET")
-		pause(doc)
-
 		doc.Find("div .lk-body-main .lknew p").Each(func(i int, s *goquery.Selection) {
 			span := s.Find("span")
 			span.Eq(0).Children().Remove()
 			tm := span.Eq(0).Text()
 			content := span.Eq(1).Text()
-			provNewsData = append(provNewsData, &provinceNews{tm, content, p.name})
+			provNewsData = append(provNewsData, &provinceNews{tm, replace(content), p.name})
 		})
 		provNewsData.save()
-		time.Sleep(requestInterval)
 	}
 }
 
 func (cl codeList) search() {
 	for _, c := range cl {
 		codeNewsData := make(codeNewsList, 0)
+		time.Sleep(requestInterval)
 
 		doc := QueryDoc(c.url, "GET")
-		pause(doc)
-
 		doc.Find("div .lk-body-main .lknew p").Each(func(i int, s *goquery.Selection) {
 			span := s.Find("span")
 			span.Eq(0).Children().Remove()
 			tm := span.Eq(0).Text()
 			content := span.Eq(1).Text()
-			codeNewsData = append(codeNewsData, &codeNews{tm, content, c.code, c.name})
+			codeNewsData = append(codeNewsData, &codeNews{tm, replace(content), c.code, c.name})
 		})
 		codeNewsData.save()
-		time.Sleep(requestInterval)
 	}
 
 }
@@ -168,27 +163,26 @@ func (cnl codeNewsList) save() {
 	}
 }
 
-func pause(doc *goquery.Document) {
-	if doc == nil {
-		fmt.Println("请求错误或IP被拒绝,暂停采集")
-		time.Sleep(scheduleInterval)
-	}
-}
-
 func checkTime() {
 	hour := time.Now().Hour()
 	switch {
 	case hour > 0 && hour < 6:
+		common.Logger().Info("当前时间段不允许采集,暂停线程")
 		zZzZ := time.Duration(6 - hour)
-		time.Sleep(zZzZ * time.Hour)
-	case hour > 21 && hour < 24:
-		zZzZ := time.Duration(30 - hour)
 		time.Sleep(zZzZ * time.Hour)
 	}
 }
 
+// 去除多余空白，多余字符
+func replace(s string) string {
+	str := strings.Replace(s, " ","", -1)
+	str = strings.Replace(s, "r","", -1)
+	return str
+}
+
 func collectTask() {
 	doc := searchIndex()
+
 	news := searchNewsList(doc)
 	provList := searchProvList(doc)
 	codeList := searchCodeList(doc)
@@ -204,6 +198,7 @@ func collectTask() {
 var (
 	requestInterval  time.Duration
 	scheduleInterval time.Duration
+	taskCount            int64
 )
 
 func CollectTaskSchedule() {
@@ -213,7 +208,7 @@ func CollectTaskSchedule() {
 	requestInterval = time.Duration(ri) * time.Second
 	scheduleInterval = time.Duration(ti) * time.Second
 
-	fmt.Println("开启数据采集线程")
+	common.Logger().Info("开启数据采集线程")
 
 	c := make(chan struct{}, 1)
 	t := time.NewTicker(scheduleInterval)
@@ -229,7 +224,14 @@ func CollectTaskSchedule() {
 
 	for {
 		c <- struct{}{}
+
 		checkTime()
+		counter()
 		collectTask()
 	}
+}
+
+func counter() {
+	taskCount ++
+	common.Logger().Infof("开始第 %d 次采集", taskCount)
 }

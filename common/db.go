@@ -9,21 +9,20 @@ import (
 var db *sql.DB
 
 func InitDB() {
-	fmt.Println("初始化数据库连接")
 	host := Cfg.Section("mysql").Key("host").String()
 	port := Cfg.Section("mysql").Key("port").String()
 	user := Cfg.Section("mysql").Key("user").String()
 	passwd := Cfg.Section("mysql").Key("password").String()
 	database := Cfg.Section("mysql").Key("database").String()
 
-	db = dbConnect(host, port, user, passwd, database)
+	db = newMysql(host, port, user, passwd, database)
 }
 
-func dbConnect(host, port, user, passwd, database string) *sql.DB {
+func newMysql(host, port, user, passwd, database string) *sql.DB {
 	dsn := fmt.Sprintf("%s:%s@tcp(%s:%s)/%s?charset=utf8", user, passwd, host, port, database)
 	db, err := sql.Open("mysql", dsn)
 	if err != nil {
-		panic(err)
+		Logger().Panic(err)
 	}
 	db.SetMaxOpenConns(100)
 	db.SetMaxIdleConns(10)
