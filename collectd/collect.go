@@ -55,7 +55,7 @@ func searchIndex() *goquery.Document {
 func searchNewsList(doc *goquery.Document) newsList {
 	data := make(newsList, 0)
 	re := regexp.MustCompile(`^[\s]*([\d]{4}-[\d]{2}-[\d]{2}[\s]*[\d]{2}:[\d]{2}).{2}(.+)$`)
-
+	common.Logger().Info("采集最新列表")
 	listAll := doc.Find("div #ScrollMe").Children()
 	for i := 0; i < 10; i++ {
 		li := listAll.Eq(i).Text()
@@ -70,13 +70,13 @@ func searchNewsList(doc *goquery.Document) newsList {
 func searchProvList(doc *goquery.Document) provinceList {
 	data := make(provinceList, 0)
 	re := regexp.MustCompile(`^[\s]*(.+)高速公路$`)
-
+	common.Logger().Info("采集省份列表")
 	doc.Find("div .articlemain .thethirdB ul li").Each(func(i int, s *goquery.Selection) {
 		url, _ := s.Find("a").Attr("href")
 		title := s.Text()
 		r := re.FindStringSubmatch(title)
-		if len(r) > 0 && len(r[1]) > 0 {
-			data = append(data, &province{r[1] + "省", url})
+		if len(r) > 0 && len(r[1]) > 0 && !excludeProvince(r[1]) {
+			data = append(data, &province{r[1], url})
 		}
 	})
 	return data
@@ -85,12 +85,13 @@ func searchProvList(doc *goquery.Document) provinceList {
 func searchCodeList(doc *goquery.Document) codeList {
 	data := make(codeList, 0)
 	re := regexp.MustCompile(`^[\s]*(.+)\((.+)\)$`)
-
+	common.Logger().Info("采集公路列表")
 	doc.Find("div .articlemain .thethirdB ul li").Each(func(i int, s *goquery.Selection) {
 		url, _ := s.Find("a").Attr("href")
 		title := s.Text()
 		r := re.FindStringSubmatch(title)
-		if len(r) > 0 {
+		if len(r) > 0 && !excludeCode(r[2]) {
+
 			data = append(data, &code{r[2], r[1], url})
 		}
 	})
@@ -102,13 +103,17 @@ func (pl provinceList) search() {
 	for _, p := range pl {
 		provNewsData := make(provinceNewsList, 0)
 		time.Sleep(requestInterval)
-
+		cur := 0
 		doc := QueryDoc(p.url, "GET")
 		doc.Find("div .lk-body-main .lknew p").Each(func(i int, s *goquery.Selection) {
 			span := s.Find("span")
 			span.Eq(0).Children().Remove()
 			tm := span.Eq(0).Text()
 			content := span.Eq(1).Text()
+			if cur == 0 {
+				cur = 1
+				common.Logger().Info("采集省份: " + p.name)
+			}
 			provNewsData = append(provNewsData, &provinceNews{tm, replace(content), p.name})
 		})
 		provNewsData.save()
@@ -119,13 +124,17 @@ func (cl codeList) search() {
 	for _, c := range cl {
 		codeNewsData := make(codeNewsList, 0)
 		time.Sleep(requestInterval)
-
+		cur := 0
 		doc := QueryDoc(c.url, "GET")
 		doc.Find("div .lk-body-main .lknew p").Each(func(i int, s *goquery.Selection) {
 			span := s.Find("span")
 			span.Eq(0).Children().Remove()
 			tm := span.Eq(0).Text()
 			content := span.Eq(1).Text()
+			if cur == 0 {
+				cur = 1
+				common.Logger().Info("采集公路: " + c.name)
+			}
 			codeNewsData = append(codeNewsData, &codeNews{tm, replace(content), c.code, c.name})
 		})
 		codeNewsData.save()
@@ -181,6 +190,28 @@ func replace(s string) string {
 	return str
 }
 
+func excludeProvince(s string) bool {
+	prov := common.Cfg.Section("exclude").Key("province").String()
+	provs := strings.Split(prov,",")
+	for _, i := range provs {
+		if s == i {
+			return true
+		}
+	}
+	return false
+}
+
+func excludeCode(s string) bool {
+	code := common.Cfg.Section("exclude").Key("code").String()
+	codes := strings.Split(code,",")
+	for _, i := range codes {
+		if s == i {
+			return true
+		}
+	}
+	return false
+}
+
 func collectTask() {
 	doc := searchIndex()
 
@@ -211,7 +242,7 @@ func CollectTaskSchedule() {
 
 	common.Logger().Info("开启数据采集线程")
 
-	c := make(chan struct{}, 1)
+	c := make(chan struct{}, 2)
 	t := time.NewTicker(scheduleInterval)
 
 	go func() {

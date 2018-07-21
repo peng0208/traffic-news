@@ -34,8 +34,6 @@ func requestDoc(urlstr string, method string, proxy string) *goquery.Document {
 		clt = &http.Client{Timeout: requestTimeout, Transport: trans}
 	}
 
-	clt = &http.Client{Timeout: requestTimeout}
-
 	req, _ := http.NewRequest(method, urlstr, nil)
 	if cookiesCache != nil {
 		for _, c := range cookiesCache {

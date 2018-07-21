@@ -27,7 +27,7 @@ func GetProxyAddr(url string) string {
 		common.Logger().Error(err)
 	}
 
-	addr := "https://" + replace(string(body))
+	addr := "http://" + replace(string(body))
 	return addr
 }
 
