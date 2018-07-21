@@ -112,7 +112,7 @@ func (pl provinceList) search() {
 			content := span.Eq(1).Text()
 			if cur == 0 {
 				cur = 1
-				common.Logger().Info("采集省份: " + p.name)
+				common.Logger().Infof("采集省份: [%s]",p.name)
 			}
 			provNewsData = append(provNewsData, &provinceNews{tm, replace(content), p.name})
 		})
@@ -133,7 +133,7 @@ func (cl codeList) search() {
 			content := span.Eq(1).Text()
 			if cur == 0 {
 				cur = 1
-				common.Logger().Info("采集公路: " + c.name)
+				common.Logger().Infof("采集公路: [%s]", c.name)
 			}
 			codeNewsData = append(codeNewsData, &codeNews{tm, replace(content), c.code, c.name})
 		})
@@ -176,7 +176,7 @@ func checkTime() {
 	hour := time.Now().Hour()
 	switch {
 	case hour > 0 && hour < 6:
-		common.Logger().Info("当前时间段不允许采集,暂停线程")
+		common.Logger().Info("当前时间段不允许采集, 暂停线程")
 		zZzZ := time.Duration(6 - hour)
 		time.Sleep(zZzZ * time.Hour)
 	}
@@ -265,5 +265,5 @@ func CollectTaskSchedule() {
 
 func counter() {
 	taskCount ++
-	common.Logger().Infof("开始第 %d 次采集", taskCount)
+	common.Logger().Infof("开始第 [ %d ] 次采集", taskCount)
 }
