@@ -11,19 +11,19 @@ var (
 )
 
 func getNews() []map[string]string {
-	sql := `select DATE_FORMAT(time,'%Y-%m-%d %H:%i') as time , content from t_news order by time desc limit 30;`
+	sql := "select DATE_FORMAT(time,'%Y-%m-%d %H:%i') as time , content from t_news order by time desc limit 30;"
 	data, _ := common.Query(sql)
 	return data
 }
 
 func getProvince() []map[string]string {
-	sql := `select id, name from t_province;`
+	sql := "select id, name from t_province;"
 	data, _ := common.Query(sql)
 	return data
 }
 
 func getCode() []map[string]string {
-	sql := `select id, name, code from t_code;`
+	sql := "select id, name, code from t_code;"
 	data, _ := common.Query(sql)
 	return data
 }

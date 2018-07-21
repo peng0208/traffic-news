@@ -31,15 +31,16 @@ func GetProxyAddr(url string) string {
 	return addr
 }
 
+//固定取1个IP
 func GetMoguApi() string {
 	var api string
-	sql := "select key, count from t_key limit 1;"
+	sql := "select `key`, count from t_key limit 1;"
 	result, _ := common.Query(sql)
 	if len(result) > 0 {
 		api = fmt.Sprintf(
-			"http://piping.mogumiao.com/proxy/api/get_ip_bs?appKey=%s&count=%s&expiryDate=0&format=2&newLine=2",
+			"http://piping.mogumiao.com/proxy/api/get_ip_al?appKey=%s&count=%s&expiryDate=0&format=2&newLine=2",
 			result[0]["key"],
-			result[0]["count"],
+			"1",
 		)
 	}
 	return api
