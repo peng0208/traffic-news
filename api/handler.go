@@ -33,12 +33,12 @@ func codeHandler(c *gin.Context) {
 }
 
 // 登录, wxCode, openid, appSecret, 获取session
-func loginHandler(c *gin.Context) {
-	wxCode := c.Query("code")
-	session := getSessionId(c, wxCode)
-	if session != nil && setSession(session.sessionId, session.sessionValue) {
-		c.String(http.StatusOK, session.sessionId)
-		return
-	}
-	c.String(http.StatusUnauthorized,"401")
-}
+//func loginHandler(c *gin.Context) {
+//	wxCode := c.Query("code")
+//	session := getSessionId(c, wxCode)
+//	if session != nil && setSession(session.sessionId, session.sessionValue) {
+//		c.String(http.StatusOK, session.sessionId)
+//		return
+//	}
+//	c.String(http.StatusUnauthorized,"")
+//}

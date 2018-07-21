@@ -2,13 +2,6 @@ package api
 
 import (
 	"traffic-news/common"
-	"net/http"
-	"io/ioutil"
-	"encoding/json"
-	"fmt"
-	"github.com/gin-gonic/gin"
-	"crypto/md5"
-	"encoding/hex"
 )
 
 var (
@@ -49,6 +42,7 @@ func getCodeNews(code string) []map[string]string {
 	return data
 }
 
+/*
 type sessionData struct {
 	sessionId    string
 	sessionValue string
@@ -87,3 +81,4 @@ func setSession(k,v string) bool {
 func getSession(k string) string {
 	return common.Get(k)
 }
+*/

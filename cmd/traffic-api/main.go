@@ -8,7 +8,6 @@ import (
 func init() {
 	common.ParseCfg()
 	common.InitDB()
-	common.InitRedis()
 }
 
 func main() {

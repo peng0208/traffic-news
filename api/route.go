@@ -25,7 +25,6 @@ func RunSrv() {
 	r := gin.New()
 	r.Use(gin.Logger())
 	r.Use(gin.Recovery())
-	r.Use(authRequired())
 
 	addRoutes(r)
 
@@ -41,7 +40,6 @@ func RunSrv() {
 }
 
 func addRoutes(r *gin.Engine) {
-	r.POST("/api/session", loginHandler)
 	r.POST("/api/news", newsHandler)
 	r.POST("/api/province", provinceHandler)
 	r.POST("/api/province/:id", provinceHandler)
