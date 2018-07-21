@@ -175,7 +175,7 @@ func (cnl codeNewsList) save() {
 func checkTime() {
 	hour := time.Now().Hour()
 	switch {
-	case hour > 0 && hour < 6:
+	case hour > 22 || hour < 7:
 		common.Logger().Info("当前时间段不允许采集, 暂停线程")
 		zZzZ := time.Duration(6 - hour)
 		time.Sleep(zZzZ * time.Hour)
@@ -242,7 +242,7 @@ func CollectTaskSchedule() {
 
 	common.Logger().Info("开启数据采集线程")
 
-	c := make(chan struct{}, 2)
+	c := make(chan struct{}, 1)
 	t := time.NewTicker(scheduleInterval)
 
 	go func() {
