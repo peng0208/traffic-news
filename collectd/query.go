@@ -74,14 +74,21 @@ func QueryDoc(urlstr string, method string) *goquery.Document {
 
 		}
 		doc = requestDoc(urlstr, method, currentProxy)
+
 		if doc == nil {
-			common.Logger().Errorf("请求异常或代理IP失效: [%s], 1秒后重试", currentProxy)
-			// 删除无效代理IP
-			currentProxy = ""
-			time.Sleep(1 * time.Second)
-			continue
+			doc = requestDoc(urlstr, method, currentProxy)
+
+			if doc == nil {
+				common.Logger().Errorf("请求异常或代理IP失效: [%s], 1秒后重试", currentProxy)
+				// 删除无效代理IP
+				currentProxy = ""
+				time.Sleep(1 * time.Second)
+				continue
+			}
+			return doc
 		}
 		return doc
+
 	}
 
 }
